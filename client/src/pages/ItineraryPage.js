@@ -27,35 +27,47 @@ const ItineraryPage = () => {
         if (token) { fetchTrip(); }
     }, [tripId, token]);
 
-    if (loading) return <div>Loading Itinerary...</div>;
+    if (loading) return <div className="loading-text">Loading Itinerary...</div>;
     if (error) return <div className="error-message">{error}</div>;
-    if (!trip) return <div>Itinerary not found.</div>;
+    if (!trip) return <div className="loading-text">Itinerary not found.</div>;
 
     return (
-        <div className="page-container">
-        <div className="itinerary-container">
-            <h1>Your Itinerary for {trip.destination?.city}</h1>
-            <div className="trip-summary">
+        <div className="itinerary-page">
+            <div className="itinerary-header">
+                <h1>Your Itinerary for {trip.destination?.city}</h1>
                 <p><strong>From:</strong> {trip.startLocation?.city}, {trip.startLocation?.country}</p>
-                <p><strong>To:</strong> {trip.destination?.city}, {trip.destination?.country}</p>
                 <p><strong>Dates:</strong> {new Date(trip.startDate).toLocaleDateString()} - {new Date(trip.endDate).toLocaleDateString()}</p>
                 <p><strong>Budget:</strong> ${trip.budget}</p>
             </div>
-            <div className="days-container">
-                {trip.itineraryPlan.map(day => (
-                    <div key={day.day} className="day-card">
-                        <h2>Day {day.day}</h2>
-                        <h4>Activities</h4>
-                        <ul> {day.activities.map((activity, index) => ( <li key={index}>{activity}</li> ))} </ul>
-                        <h4>Accommodation</h4>
-                        <p>{day.accommodation}</p>
-                        <h4>Transport</h4>
-                        <p>{day.transport}</p>
+
+            <div className="timeline">
+                {trip.itineraryPlan.map((day, index) => (
+                    <div key={index} className="timeline-item">
+                        <div className="timeline-dot"></div>
+                        <div className="timeline-content">
+                            <h2>Day {day.day}</h2>
+                            <div className="timeline-section">
+                                <h4>✈️ Transport</h4>
+                                <p>{day.transport}</p>
+                            </div>
+                            <div className="timeline-section">
+                                <h4>🏃 Activities</h4>
+                                <ul>
+                                    {day.activities.map((activity, i) => (
+                                        <li key={i}>{activity}</li>
+                                    ))}
+                                </ul>
+                            </div>
+                            <div className="timeline-section">
+                                <h4>🏨 Accommodation</h4>
+                                <p>{day.accommodation}</p>
+                            </div>
+                        </div>
                     </div>
                 ))}
             </div>
         </div>
-        </div>
     );
 };
+
 export default ItineraryPage;
