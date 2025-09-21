@@ -1,0 +1,12 @@
+/* src/pages/ItineraryPage.css */
+.itinerary-container { max-width: 800px; margin: 2rem auto; padding: 0 1rem; }
+.itinerary-container h1 { text-align: center; margin-bottom: 1rem; color: var(--primary-color); }
+.trip-summary { background: #ffffff; padding: 1.5rem 2rem; border-radius: 12px; margin-bottom: 2.5rem; box-shadow: var(--card-shadow); }
+.trip-summary p { margin: 0.5rem 0; font-size: 1.1rem; }
+.days-container { display: flex; flex-direction: column; gap: 1.5rem; }
+.day-card { background: #fff; border-radius: 12px; padding: 1.5rem 2rem; box-shadow: var(--card-shadow); transition: transform 0.3s, box-shadow 0.3s; }
+.day-card:hover { transform: translateY(-5px); box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12); }
+.day-card h2 { border-bottom: 2px solid var(--primary-color); padding-bottom: 0.5rem; margin-bottom: 1rem; color: var(--primary-color); }
+.day-card h4 { margin-top: 1.5rem; margin-bottom: 0.5rem; color: #555; }
+.day-card ul { list-style-type: none; padding-left: 0; }
+.day-card ul li { background-color: var(--background-color); padding: 0.5rem 1rem; border-radius: 5px; margin-bottom: 0.5rem; }
