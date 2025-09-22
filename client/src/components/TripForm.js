@@ -4,38 +4,58 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { Country, State, City } from 'country-state-city';
 import AuthContext from '../context/AuthContext';
+import Select from 'react-select'; // <-- NEW: Import custom select
+import DatePicker from 'react-datepicker'; // <-- NEW: Import date picker
+import "react-datepicker/dist/react-datepicker.css"; // <-- NEW: Import date picker styles
 import './TripForm.css';
 
 const TripForm = () => {
     const { token } = useContext(AuthContext);
     const navigate = useNavigate();
+
+    // State for dropdown options
     const [countries, setCountries] = useState([]);
     const [states, setStates] = useState([]);
     const [cities, setCities] = useState([]);
-    const [selectedCountry, setSelectedCountry] = useState('');
-    const [selectedState, setSelectedState] = useState('');
-    const [selectedCity, setSelectedCity] = useState('');
     const [startCountries, setStartCountries] = useState([]);
     const [startStates, setStartStates] = useState([]);
     const [startCities, setStartCities] = useState([]);
-    const [selectedStartCountry, setSelectedStartCountry] = useState('');
-    const [selectedStartState, setSelectedStartState] = useState('');
-    const [selectedStartCity, setSelectedStartCity] = useState('');
-    const [formData, setFormData] = useState({ startDate: '', endDate: '', adults: 1, children: 0, budget: '' });
-    
-    useEffect(() => { const allCountries = Country.getAllCountries(); setCountries(allCountries); setStartCountries(allCountries); }, []);
-    useEffect(() => { if (selectedCountry) { setStates(State.getStatesOfCountry(selectedCountry)); setSelectedState(''); setCities([]); setSelectedCity(''); } }, [selectedCountry]);
-    useEffect(() => { if (selectedCountry && selectedState) { setCities(City.getCitiesOfState(selectedCountry, selectedState)); setSelectedCity(''); } }, [selectedCountry, selectedState]);
-    useEffect(() => { if (selectedStartCountry) { setStartStates(State.getStatesOfCountry(selectedStartCountry)); setSelectedStartState(''); setStartCities([]); setSelectedStartCity(''); } }, [selectedStartCountry]);
-    useEffect(() => { if (selectedStartCountry && selectedStartState) { setStartCities(City.getCitiesOfState(selectedStartCountry, selectedStartState)); setSelectedStartCity(''); } }, [selectedStartCountry, selectedStartState]);
-    
+
+    // State for selected values
+    const [selectedCountry, setSelectedCountry] = useState(null);
+    const [selectedState, setSelectedState] = useState(null);
+    const [selectedCity, setSelectedCity] = useState(null);
+    const [selectedStartCountry, setSelectedStartCountry] = useState(null);
+    const [selectedStartState, setSelectedStartState] = useState(null);
+    const [selectedStartCity, setSelectedStartCity] = useState(null);
+
+    // State for other form data
+    const [startDate, setStartDate] = useState(null);
+    const [endDate, setEndDate] = useState(null);
+    const [formData, setFormData] = useState({ adults: 1, children: 0, budget: '' });
+
+    // Format data for react-select
+    const formatForSelect = (data) => data.map(item => ({ value: item.isoCode || item.name, label: item.name, ...item }));
+
+    // Effects for loading location data
+    useEffect(() => {
+        const allCountries = Country.getAllCountries();
+        setCountries(formatForSelect(allCountries));
+        setStartCountries(formatForSelect(allCountries));
+    }, []);
+    useEffect(() => { if (selectedCountry) { setStates(formatForSelect(State.getStatesOfCountry(selectedCountry.value))); setSelectedState(null); setCities([]); setSelectedCity(null); } }, [selectedCountry]);
+    useEffect(() => { if (selectedCountry && selectedState) { setCities(formatForSelect(City.getCitiesOfState(selectedCountry.value, selectedState.value))); setSelectedCity(null); } }, [selectedCountry, selectedState]);
+    useEffect(() => { if (selectedStartCountry) { setStartStates(formatForSelect(State.getStatesOfCountry(selectedStartCountry.value))); setSelectedStartState(null); setStartCities([]); setSelectedStartCity(null); } }, [selectedStartCountry]);
+    useEffect(() => { if (selectedStartCountry && selectedStartState) { setStartCities(formatForSelect(City.getCitiesOfState(selectedStartCountry.value, selectedStartState.value))); setSelectedStartCity(null); } }, [selectedStartCountry, selectedStartState]);
+
     const handleInputChange = e => setFormData({ ...formData, [e.target.name]: e.target.value });
+
     const handleSubmit = async e => {
         e.preventDefault();
         const tripData = {
-            startLocation: { country: Country.getCountryByCode(selectedStartCountry)?.name, state: State.getStateByCodeAndCountry(selectedStartState, selectedStartCountry)?.name, city: selectedStartCity, },
-            destination: { country: Country.getCountryByCode(selectedCountry)?.name, state: State.getStateByCodeAndCountry(selectedState, selectedCountry)?.name, city: selectedCity, },
-            startDate: formData.startDate, endDate: formData.endDate, people: { adults: formData.adults, children: formData.children }, budget: formData.budget
+            startLocation: { country: selectedStartCountry?.label, state: selectedStartState?.label, city: selectedStartCity?.label },
+            destination: { country: selectedCountry?.label, state: selectedState?.label, city: selectedCity?.label },
+            startDate, endDate, people: { adults: formData.adults, children: formData.children }, budget: formData.budget
         };
         try {
             const config = { headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` } };
@@ -46,30 +66,45 @@ const TripForm = () => {
             alert('Failed to save trip. Please try again.');
         }
     };
+
+    // Custom styles for react-select
+    const customSelectStyles = { control: (provided) => ({ ...provided, minHeight: '48px', borderRadius: '8px', border: '1px solid var(--light-gray)' }) };
+
     return (
         <div className="trip-form-container">
             <h2>Plan Your Next Adventure</h2>
             <form onSubmit={handleSubmit}>
+                {/* Location Selects */}
                 <div className="form-group">
                     <label>Starting From (Your Home)</label>
                     <div className="destination-inputs">
-                        <select value={selectedStartCountry} onChange={(e) => setSelectedStartCountry(e.target.value)} required> <option value="">Select Country</option> {startCountries.map(country => (<option key={country.isoCode} value={country.isoCode}>{country.name}</option>))} </select>
-                        <select value={selectedStartState} onChange={(e) => setSelectedStartState(e.target.value)} disabled={!selectedStartCountry} required> <option value="">Select State</option> {startStates.map(state => (<option key={state.isoCode} value={state.isoCode}>{state.name}</option>))} </select>
-                        <select value={selectedStartCity} onChange={(e) => setSelectedStartCity(e.target.value)} disabled={!selectedStartState} required> <option value="">Select City</option> {startCities.map(city => (<option key={city.name} value={city.name}>{city.name}</option>))} </select>
+                        <Select options={startCountries} value={selectedStartCountry} onChange={setSelectedStartCountry} placeholder="Select Country" styles={customSelectStyles} required />
+                        <Select options={startStates} value={selectedStartState} onChange={setSelectedStartState} placeholder="Select State" styles={customSelectStyles} isDisabled={!selectedStartCountry} required />
+                        <Select options={startCities} value={selectedStartCity} onChange={setSelectedStartCity} placeholder="Select City" styles={customSelectStyles} isDisabled={!selectedStartState} required />
                     </div>
                 </div>
                 <div className="form-group">
                     <label>Destination</label>
                     <div className="destination-inputs">
-                        <select value={selectedCountry} onChange={(e) => setSelectedCountry(e.target.value)} required> <option value="">Select Country</option> {countries.map(country => (<option key={country.isoCode} value={country.isoCode}>{country.name}</option>))} </select>
-                        <select value={selectedState} onChange={(e) => setSelectedState(e.target.value)} disabled={!selectedCountry} required> <option value="">Select State</option> {states.map(state => (<option key={state.isoCode} value={state.isoCode}>{state.name}</option>))} </select>
-                        <select value={selectedCity} onChange={(e) => setSelectedCity(e.target.value)} disabled={!selectedState} required> <option value="">Select City</option> {cities.map(city => (<option key={city.name} value={city.name}>{city.name}</option>))} </select>
+                        <Select options={countries} value={selectedCountry} onChange={setSelectedCountry} placeholder="Select Country" styles={customSelectStyles} required />
+                        <Select options={states} value={selectedState} onChange={setSelectedState} placeholder="Select State" styles={customSelectStyles} isDisabled={!selectedCountry} required />
+                        <Select options={cities} value={selectedCity} onChange={setSelectedCity} placeholder="Select City" styles={customSelectStyles} isDisabled={!selectedState} required />
                     </div>
                 </div>
+
+                {/* Date Pickers */}
                 <div className="form-group form-row">
-                    <div><label>Arrival Date</label><input type="date" name="startDate" value={formData.startDate} onChange={handleInputChange} required /></div>
-                    <div><label>Departure Date</label><input type="date" name="endDate" value={formData.endDate} onChange={handleInputChange} required /></div>
+                    <div className="date-picker-wrapper">
+                        <label>Arrival Date</label>
+                        <DatePicker selected={startDate} onChange={(date) => setStartDate(date)} selectsStart startDate={startDate} endDate={endDate} className="date-input" placeholderText="Select date" required />
+                    </div>
+                    <div className="date-picker-wrapper">
+                        <label>Departure Date</label>
+                        <DatePicker selected={endDate} onChange={(date) => setEndDate(date)} selectsEnd startDate={startDate} endDate={endDate} minDate={startDate} className="date-input" placeholderText="Select date" required />
+                    </div>
                 </div>
+
+                {/* Other Inputs */}
                 <div className="form-group form-row">
                     <div><label>Adults</label><input type="number" name="adults" value={formData.adults} onChange={handleInputChange} min="1" required /></div>
                     <div><label>Children</label><input type="number" name="children" value={formData.children} onChange={handleInputChange} min="0" required /></div>
@@ -83,4 +118,5 @@ const TripForm = () => {
         </div>
     );
 };
+
 export default TripForm;

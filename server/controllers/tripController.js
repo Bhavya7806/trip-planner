@@ -7,17 +7,29 @@ exports.createTrip = async (req, res) => {
     try {
         const { startLocation, destination, startDate, endDate, people, budget } = req.body;
 
+        const sDate = new Date(startDate);
+        const eDate = new Date(endDate);
+        const diffTime = Math.abs(eDate - sDate);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+        
+        // Calculate the daily budget
+        const dailyBudget = Math.floor(budget / diffDays);
+
         // --- Fetch Real Attractions from Geoapify API ---
         let attractions = [];
         try {
+            // First, get the place_id for the destination city
             const geocodeRes = await axios.get('https://api.geoapify.com/v1/geocode/search', {
                 params: {
                     text: `${destination.city}, ${destination.country}`,
                     apiKey: process.env.GEOAPIFY_API_KEY
                 }
             });
+
             const placeId = geocodeRes.data.features[0]?.properties.place_id;
+
             if (placeId) {
+                // Now, find places of interest around that city's location
                 const placesRes = await axios.get('https://api.geoapify.com/v2/places', {
                     params: {
                         categories: 'tourism.sights',
@@ -26,21 +38,17 @@ exports.createTrip = async (req, res) => {
                         apiKey: process.env.GEOAPIFY_API_KEY
                     }
                 });
+
                 if (placesRes.data.features) {
                     attractions = placesRes.data.features.map(place => place.properties.name);
                 }
             }
         } catch (apiError) {
-            console.error("Could not fetch attractions, using placeholders.", apiError.message);
+            console.error("Could not fetch attractions from Geoapify, using placeholders.", apiError.message);
             attractions = ["a famous local museum", "the central city square", "a beautiful park"];
         }
 
         // --- Build the Itinerary ---
-        const sDate = new Date(startDate);
-        const eDate = new Date(endDate);
-        const diffTime = Math.abs(eDate - sDate);
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
-
         let sampleItinerary = [];
         for (let i = 1; i <= diffDays; i++) {
             let dailyActivities = [];
@@ -56,18 +64,28 @@ exports.createTrip = async (req, res) => {
             if (i === 1) {
                 transportSuggestion = `Travel from ${startLocation.city} to ${destination.city}.`;
             }
+
             sampleItinerary.push({
                 day: i,
                 activities: dailyActivities,
                 accommodation: `Find a hotel near ${destination.city} center.`,
-                transport: transportSuggestion
+                transport: transportSuggestion,
+                dailyBudget: dailyBudget
             });
         }
 
         // --- Save the Trip ---
         const newTrip = new Trip({
-            user: req.user.id, startLocation, destination, startDate, endDate, people, budget, itineraryPlan: sampleItinerary
+            user: req.user.id,
+            startLocation,
+            destination,
+            startDate,
+            endDate,
+            people,
+            budget,
+            itineraryPlan: sampleItinerary
         });
+
         const savedTrip = await newTrip.save();
         res.status(201).json(savedTrip);
 

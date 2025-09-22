@@ -33,15 +33,19 @@ const TripSchema = new mongoose.Schema({
         type: Number,
         required: true
     },
-    itineraryPlan: {
-        type: [{ // <-- UPDATED THIS SECTION
-            day: Number,
-            activities: [String],
-            accommodation: String,
-            transport: String // Added transport field
-        }],
-        default: []
-    },
+    // In trip-planner-backend/models/Trip.js
+//...
+itineraryPlan: {
+    type: [{
+        day: Number,
+        activities: [String],
+        accommodation: String,
+        transport: String,
+        dailyBudget: Number // <-- ADD THIS LINE
+    }],
+    default: []
+},
+//...
     createdAt: {
         type: Date,
         default: Date.now
