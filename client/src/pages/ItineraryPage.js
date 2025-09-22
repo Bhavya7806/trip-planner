@@ -69,5 +69,5 @@ const ItineraryPage = () => {
         </div>
     );
 };
-
+export default ItineraryPage;
 
