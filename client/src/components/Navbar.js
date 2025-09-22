@@ -26,8 +26,9 @@ const Navbar = () => {
     return (
         <nav className="navbar">
             <Link to="/" className="navbar-brand">
+            
                 <svg
-                    xmlns="http://www.w3.org/2000/svg"
+                    xmlns="%PUBLIC_URL%/LOGO.png"
                     width="28"
                     height="28"
                     viewBox="0 0 24 24"

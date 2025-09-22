@@ -9,7 +9,7 @@ const HomePage = () => {
         <>
             <div className="home-container">
                 <div className="hero-section">
-                    <h1>Your Adventure Awaits.</h1>
+                    <h1>Your Adventure Awaits</h1>
                     <p>Tell us your destination, budget, and travel dates. Our AI will handle the rest, crafting a unique, personalized itinerary just for you. Effortless planning, unforgettable journeys.</p>
                     <div className="call-to-action">
                         <h2>To create your itinerary, please log in or create an account.</h2>
