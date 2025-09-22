@@ -70,4 +70,4 @@ const ItineraryPage = () => {
     );
 };
 
-export default ItineraryPage;
+
